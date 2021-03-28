@@ -12,7 +12,7 @@
 struct FaceCollector
 {
     void operator() (const osg::Vec3 v1, const osg::Vec3 v2, 
-                     const osg::Vec3 v3, bool treatVertexDataAsTemporary)
+                     const osg::Vec3 v3)
     {
         PrintableVec3 pv1 = PrintableVec3(v1.x(), v1.y(), v1.z());
         PrintableVec3 pv2 = PrintableVec3(v2.x(), v2.y(), v2.z());
@@ -22,10 +22,6 @@ struct FaceCollector
 };
 
 int main() {
-    // exploration of osg::Vec3
-    osg::Vec3 temp = osg::Vec3(1.0, 2.0, 3.0);
-    std::cout << temp.x() << temp.y() << temp.z() << std::endl;
-
 
     // create the vertices
     osg::ref_ptr<osg::Vec3Array> vertices = new osg::Vec3Array;
