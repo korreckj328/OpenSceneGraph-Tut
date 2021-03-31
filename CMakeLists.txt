@@ -37,3 +37,18 @@ TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${OPENSCENEGRAPH_LIBRARIES})
 # TARGET_LINK_LIBRARIES( ${PROJECT_NAME} OSGUTIL )
 # TARGET_LINK_LIBRARIES( ${PROJECT_NAME} OSGVIEWER )
 
+set (source "${CMAKE_SOURCE_DIR}/Resources")
+
+if (NOT APPLE)
+        set (destination "${CMAKE_CURRENT_BINARY_DIR}/Resources")
+else()
+    set (destination "${CMAKE_CURRENT_BINARY_DIR}/Debug/Resources")
+
+endif()
+
+add_custom_command(
+        TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory ${source} ${destination}
+        DEPENDS ${destination}
+        COMMENT "symbolic link resources folder from ${source} => ${destination}"
+)
