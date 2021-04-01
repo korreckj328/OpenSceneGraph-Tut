@@ -27,6 +27,10 @@ int main() {
     osg::ref_ptr<osg::Group> root = new osg::Group;
     root->addChild(cessnaTransform1.get());
     
+    // switchnode set value
+    cessnaModelSwitch->setValue(0, true);
+    cessnaModelSwitch->setValue(1, false);
+    
     //create the viewer and then render the root
     osgViewer::Viewer viewer;
     viewer.setSceneData(root.get());
