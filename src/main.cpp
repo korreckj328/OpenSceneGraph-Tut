@@ -1,50 +1,49 @@
 // open scene graph tutorial
 // Jeremiah Korreck
 
-#include <osg/MatrixTransform>
-#include <osg/LightSource>
+#include <osg/Texture2D>
+#include <osg/Geometry>
 #include <osgDB/ReadFile>
 #include <osgViewer/Viewer>
-
-osg::Node* createLightSource(unsigned int num, const osg::Vec3& trans, const osg::Vec4& color) {
-    osg::ref_ptr<osg::Light> light = new osg::Light;
-    light->setLightNum(num);
-    light->setDiffuse(color);
-    light->setPosition(osg::Vec4(0.0f, 0.0f, 0.0f, 1.0f));
-
-    osg::ref_ptr<osg::LightSource> lightSource = new osg::LightSource;
-    lightSource->setLight(light);
-    osg::ref_ptr<osg::MatrixTransform> sourceTrans = new osg::MatrixTransform;
-    sourceTrans->setMatrix(osg::Matrix::translate(trans));
-    sourceTrans->addChild(lightSource.get());
-    return sourceTrans.release();
-}
-
+#include <iostream>
 
 int main() {
-    // load the Models
-    osg::ref_ptr<osg::Node> model = osgDB::readNodeFile("Resources/cessna.osg");
+    osg::ref_ptr<osg::Vec3Array> vertices = new osg::Vec3Array;
+    vertices->push_back(osg::Vec3(-0.5f, 0.0f, -0.5f));
+    vertices->push_back(osg::Vec3(0.5f, 0.0f, -0.5f));
+    vertices->push_back(osg::Vec3(0.5f, 0.0f, 0.5f));
+    vertices->push_back(osg::Vec3(-0.5f, 0.0f, 0.5f));
     
-    // create transforms for each of the models I want to render in the scene
-    osg::ref_ptr<osg::MatrixTransform> transform = new osg::MatrixTransform;
+    osg::ref_ptr<osg::Vec3Array> normals = new osg::Vec3Array;
+    normals->push_back(osg::Vec3(0.0f, -1.0f, 0.0f));
     
-    transform->addChild(model.get());
+    osg::ref_ptr<osg::Vec2Array> texcoords = new osg::Vec2Array;
+    texcoords->push_back(osg::Vec2(0.0f, 0.0f));
+    texcoords->push_back(osg::Vec2(0.0f, 1.0f));
+    texcoords->push_back(osg::Vec2(1.0f, 1.0f));
+    texcoords->push_back(osg::Vec2(1.0f, 0.0f));
     
-    // add the transforms to the root node of the scene
-    osg::ref_ptr<osg::Group> root = new osg::Group;
-    root->addChild(transform.get());
+    osg::ref_ptr<osg::Geometry> quad = new osg::Geometry;
+    quad->setVertexArray(vertices.get());
+    quad->setNormalArray(normals.get());
+    quad->setNormalBinding(osg::Geometry::BIND_OVERALL);
+    quad->setTexCoordArray(0, texcoords.get());
+    quad->addPrimitiveSet(new osg::DrawArrays(GL_QUADS, 0, 4));
     
-    osg::Node * light0 = createLightSource(0, osg::Vec3(-20.0f, 0.0f, 0.0f), osg::Vec4(1.0f,1.0f,0.0f,1.0f));
-    osg::Node * light1 = createLightSource(1, osg::Vec3(0.0f, -20.0f, 0.0f), osg::Vec4(0.0f,1.0f,1.0f,1.0f));
-    osg::Node * light2 = createLightSource(2, osg::Vec3(0.0f, 20.0f, -20.0f), osg::Vec4(1.0f,0.0f,0.0f,1.0f));
-
-    root->getOrCreateStateSet()->setMode(GL_LIGHT0, osg::StateAttribute::ON);
-    root->getOrCreateStateSet()->setMode(GL_LIGHT1, osg::StateAttribute::ON);
-    root->getOrCreateStateSet()->setMode(GL_LIGHT2, osg::StateAttribute::ON);
-
-    root->addChild(light0);
-    root->addChild(light1);
-    root->addChild(light2);
+    osg::ref_ptr<osg::Texture2D> texture = new osg::Texture2D;
+    osg::ref_ptr<osg::Image> image = osgDB::readImageFile("Resources/Images/lz.rgb");
+    
+    if (image == nullptr) {
+        std::cout << "image is null" << std::endl;
+    } else {
+        std::cout << "image was loaded" << std::endl;
+    }
+    
+    texture->setImage(image.get());
+    
+    osg::ref_ptr<osg::Geode> root = new osg::Geode;
+    root->addDrawable(quad.get());
+    root->getOrCreateStateSet()->setTextureAttributeAndModes(0, texture.get());
     
     //create the viewer and then render the root
     osgViewer::Viewer viewer;
