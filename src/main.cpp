@@ -1,6 +1,7 @@
 // open scene graph tutorial
 // Jeremiah Korreck
 
+#include <osg/BlendFunc>
 #include <osg/Texture2D>
 #include <osg/Geometry>
 #include <osgDB/ReadFile>
@@ -23,27 +24,36 @@ int main() {
     texcoords->push_back(osg::Vec2(1.0f, 1.0f));
     texcoords->push_back(osg::Vec2(1.0f, 0.0f));
     
+    osg::ref_ptr<osg::Vec4Array> colors = new osg::Vec4Array;
+    colors->push_back(osg::Vec4(0.5f, 0.0f, 0.0f, 0.5f));
+    
     osg::ref_ptr<osg::Geometry> quad = new osg::Geometry;
     quad->setVertexArray(vertices.get());
     quad->setNormalArray(normals.get());
     quad->setNormalBinding(osg::Geometry::BIND_OVERALL);
+    quad->setColorArray(colors.get());
+    quad->setColorBinding(osg::Geometry::BIND_OVERALL);
     quad->setTexCoordArray(0, texcoords.get());
     quad->addPrimitiveSet(new osg::DrawArrays(GL_QUADS, 0, 4));
     
+    osg::ref_ptr<osg::Geode> geode = new osg::Geode;
+    geode->addDrawable(quad.get());
+    
     osg::ref_ptr<osg::Texture2D> texture = new osg::Texture2D;
     osg::ref_ptr<osg::Image> image = osgDB::readImageFile("Resources/Images/lz.rgb");
-    
-    if (image == nullptr) {
-        std::cout << "image is null" << std::endl;
-    } else {
-        std::cout << "image was loaded" << std::endl;
-    }
-    
     texture->setImage(image.get());
     
-    osg::ref_ptr<osg::Geode> root = new osg::Geode;
-    root->addDrawable(quad.get());
-    root->getOrCreateStateSet()->setTextureAttributeAndModes(0, texture.get());
+    osg::ref_ptr<osg::BlendFunc> blendfunc = new osg::BlendFunc;
+    blendfunc->setFunction(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    
+    osg::StateSet* stateset = geode->getOrCreateStateSet();
+    stateset->setTextureAttributeAndModes(0, texture.get());
+    stateset->setAttributeAndModes(blendfunc);
+    stateset->setRenderingHint(osg::StateSet::TRANSPARENT_BIN);
+    
+    osg::ref_ptr<osg::Group> root = new osg::Group;
+    root->addChild(geode.get());
+    root->addChild(osgDB::readNodeFile("Resources/glider.osg"));
     
     //create the viewer and then render the root
     osgViewer::Viewer viewer;
