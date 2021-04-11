@@ -1,63 +1,62 @@
 // open scene graph tutorial
 // Jeremiah Korreck
 
-#include <osg/BlendFunc>
-#include <osg/Texture2D>
-#include <osg/Geometry>
+#include <osg/Program>
 #include <osgDB/ReadFile>
 #include <osgViewer/Viewer>
-#include <iostream>
+
+static const char* vertSource = {
+"varying vec3 normal;\n"
+"void main()\n"
+"{\n"
+" normal = normalize(gl_NormalMatrix * gl_Normal);\n"
+" gl_Position = ftransform();\n"
+"}\n"
+};
+
+static const char* fragSource = {
+    "uniform vec4 color1;\n"
+    "uniform vec4 color2;\n"
+    "uniform vec4 color3;\n"
+    "uniform vec4 color4;\n"
+    "varying vec3 normal;\n"
+    "void main()\n"
+    "{\n"
+    "    float intensity = dot(vec3(gl_LightSource[0].position), normal);\n"
+    "    if (intensity > 0.95) gl_FragColor = color1;\n"
+    "    else if (intensity > 0.5) gl_FragColor = color2;\n"
+    "    else if (intensity > 0.25) gl_FragColor = color3;\n"
+    "    else gl_FragColor = color4;\n"
+    "}\n"
+};
+
+
 
 int main() {
-    osg::ref_ptr<osg::Vec3Array> vertices = new osg::Vec3Array;
-    vertices->push_back(osg::Vec3(-0.5f, 0.0f, -0.5f));
-    vertices->push_back(osg::Vec3(0.5f, 0.0f, -0.5f));
-    vertices->push_back(osg::Vec3(0.5f, 0.0f, 0.5f));
-    vertices->push_back(osg::Vec3(-0.5f, 0.0f, 0.5f));
-    
-    osg::ref_ptr<osg::Vec3Array> normals = new osg::Vec3Array;
-    normals->push_back(osg::Vec3(0.0f, -1.0f, 0.0f));
-    
-    osg::ref_ptr<osg::Vec2Array> texcoords = new osg::Vec2Array;
-    texcoords->push_back(osg::Vec2(0.0f, 0.0f));
-    texcoords->push_back(osg::Vec2(0.0f, 1.0f));
-    texcoords->push_back(osg::Vec2(1.0f, 1.0f));
-    texcoords->push_back(osg::Vec2(1.0f, 0.0f));
-    
-    osg::ref_ptr<osg::Vec4Array> colors = new osg::Vec4Array;
-    colors->push_back(osg::Vec4(0.5f, 0.0f, 0.0f, 0.5f));
-    
-    osg::ref_ptr<osg::Geometry> quad = new osg::Geometry;
-    quad->setVertexArray(vertices.get());
-    quad->setNormalArray(normals.get());
-    quad->setNormalBinding(osg::Geometry::BIND_OVERALL);
-    quad->setColorArray(colors.get());
-    quad->setColorBinding(osg::Geometry::BIND_OVERALL);
-    quad->setTexCoordArray(0, texcoords.get());
-    quad->addPrimitiveSet(new osg::DrawArrays(GL_QUADS, 0, 4));
-    
-    osg::ref_ptr<osg::Geode> geode = new osg::Geode;
-    geode->addDrawable(quad.get());
-    
-    osg::ref_ptr<osg::Texture2D> texture = new osg::Texture2D;
-    osg::ref_ptr<osg::Image> image = osgDB::readImageFile("Resources/Images/lz.rgb");
-    texture->setImage(image.get());
-    
-    osg::ref_ptr<osg::BlendFunc> blendfunc = new osg::BlendFunc;
-    blendfunc->setFunction(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    
-    osg::StateSet* stateset = geode->getOrCreateStateSet();
-    stateset->setTextureAttributeAndModes(0, texture.get());
-    stateset->setAttributeAndModes(blendfunc);
-    stateset->setRenderingHint(osg::StateSet::TRANSPARENT_BIN);
-    
-    osg::ref_ptr<osg::Group> root = new osg::Group;
-    root->addChild(geode.get());
-    root->addChild(osgDB::readNodeFile("Resources/glider.osg"));
+    //read the strings we wrote up top into shaders
+    osg::ref_ptr<osg::Shader> vertShader = new osg::Shader(osg::Shader::VERTEX, vertSource);
+    osg::ref_ptr<osg::Shader> fragShader = new osg::Shader(osg::Shader::FRAGMENT, fragSource);
+
+    //create an osg::Program object to assign the shaders to
+    osg::ref_ptr<osg::Program> program = new osg::Program;
+    program->addShader(vertShader.get());
+    program->addShader(fragShader.get());
+
+    // read in the model
+    osg::ref_ptr<osg::Node> model = osgDB::readNodeFile("Resources/cow.osg");
+
+    //create a state set and add the program and uniforms to it.
+    osg::StateSet *stateset = model->getOrCreateStateSet();
+    stateset->setAttributeAndModes(program.get());
+    stateset->addUniform(new osg::Uniform("color1", osg::Vec4(1.0f, 0.5f, 0.5f, 1.0f)));
+    stateset->addUniform(new osg::Uniform("color2", osg::Vec4(0.5f, 0.2f, 0.2f, 1.0f)));
+    stateset->addUniform(new osg::Uniform("color3", osg::Vec4(0.2f, 0.1f, 0.1f, 1.0f)));
+    stateset->addUniform(new osg::Uniform("color4", osg::Vec4(0.1f, 0.05f, 0.05f, 1.0f)));
+
     
     //create the viewer and then render the root
     osgViewer::Viewer viewer;
-    viewer.setSceneData(root.get());
+    viewer.setSceneData(model.get());
     
     return viewer.run();
 }
