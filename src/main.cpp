@@ -2,18 +2,14 @@
 // Jeremiah Korreck
 
 #include <osgDB/ReadFile>
-#include <osgGA/TrackballManipulator>
 #include <osgViewer/Viewer>
-#include <iostream>
 
 int main() {
-    osg::ref_ptr<osg::Node> model = osgDB::readNodeFile("Resources/lz.osg");
+    // set the number of multisamples  2,4, or 6
+    osg::DisplaySettings::instance()->setNumMultiSamples(2);
+
+    osg::ref_ptr<osg::Node> model = osgDB::readNodeFile("Resources/cessna.osg");
     osgViewer::Viewer viewer;
     viewer.setSceneData(model.get());
-    viewer.setCameraManipulator(new osgGA::TrackballManipulator);
-    while (!viewer.done()) {
-        viewer.frame();
-        std::cout << "Frame number: " << viewer.getFrameStamp()->getFrameNumber() << std::endl;
-    }
-    return 0;
+    return viewer.run();
 }
