@@ -16,6 +16,6 @@ void DynamicQuadCallback::update(osg::NodeVisitor *, osg::Drawable *drawable) {
     }
     osg::Quat quat(osg::PI * 0.01, osg::X_AXIS);
     vertices->back() = quat * vertices->back();
-    quad->dirtyDisplayList();
+    vertices->dirty();
     quad->dirtyBound();
 }

@@ -45,7 +45,8 @@ int main() {
     osg::Geometry * quad = createQuad();
     quad->setDataVariance(osg::Object::DYNAMIC);
     quad->setUpdateCallback(new DynamicQuadCallback);
-
+    quad->setUseVertexBufferObjects(true);
+    quad->setUseDisplayList(false);
     osg::ref_ptr<osg::Geode> root = new osg::Geode;
     root->addDrawable(quad);
 
