@@ -39,12 +39,8 @@ TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${OPENSCENEGRAPH_LIBRARIES})
 
 set (source "${CMAKE_SOURCE_DIR}/Resources")
 
-if (NOT APPLE)
-        set (destination "${CMAKE_CURRENT_BINARY_DIR}/Resources")
-else()
-    set (destination "${CMAKE_CURRENT_BINARY_DIR}/Debug/Resources")
+set (destination "${CMAKE_CURRENT_BINARY_DIR}/Resources")
 
-endif()
 
 add_custom_command(
         TARGET ${PROJECT_NAME} POST_BUILD
