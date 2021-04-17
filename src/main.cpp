@@ -11,8 +11,9 @@
 int main() {
     // set the number of multisamples  2,4, or 6
     // rpi 4 only accepts 2, 4
+    // apple M1 os 11.2.3 supports 6
     
-    osg::DisplaySettings::instance()->setNumMultiSamples(4);
+    osg::DisplaySettings::instance()->setNumMultiSamples(6);
 
     osg::ref_ptr<osg::Node> cessna = osgDB::readNodeFile("Resources/cessna.osg");
     osg::ref_ptr<osg::Node> cessnaFire = osgDB::readNodeFile("Resources/cessnaFire.osg");
