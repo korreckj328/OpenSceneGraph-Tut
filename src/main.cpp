@@ -1,36 +1,27 @@
 // open scene graph tutorial
 // Jeremiah Korreck
 
-#include <osg/Geometry>
-#include <osg/Geode>
+#include <osg/AnimationPath>
+#include <osg/MatrixTransform>
+#include <osgDB/ReadFile>
 #include <osgGA/TrackballManipulator>
 #include <osgViewer/Viewer>
 #include "DynamicQuadCallback.h"
 
-osg::Geometry* createQuad() {
-    osg::ref_ptr<osg::Vec3Array> vertices = new osg::Vec3Array;
-    vertices->push_back(osg::Vec3(0.0f, 0.0f, 0.0f));
-    vertices->push_back(osg::Vec3(1.0f, 0.0f, 0.0f));
-    vertices->push_back(osg::Vec3(1.0f, 0.0f, 1.0f));
-    vertices->push_back(osg::Vec3(0.0f, 0.0f, 1.0f));
+osg::AnimationPath* createAnimationPath(float radius, float time) {
+    osg::ref_ptr<osg::AnimationPath> path = new osg::AnimationPath;
+    path->setLoopMode(osg::AnimationPath::LOOP);
 
-    osg::ref_ptr<osg::Vec3Array> normals = new osg::Vec3Array;
-    normals->push_back(osg::Vec3(0.0f, -1.0f, 0.0f));
-
-    osg::ref_ptr<osg::Vec4Array> colors = new osg::Vec4Array;
-    colors->push_back(osg::Vec4(1.0f, 1.0f, 0.0f, 1.0f));
-    colors->push_back(osg::Vec4(0.0f, 1.0f, 0.0f, 1.0f));
-    colors->push_back(osg::Vec4(0.0f, 0.0f, 1.0f, 1.0f));
-    colors->push_back(osg::Vec4(1.0f, 0.0f, 0.0f, 1.0f));
-
-    osg::ref_ptr<osg::Geometry> quad = new osg::Geometry;
-    quad->setVertexArray(vertices.get());
-    quad->setNormalArray(normals.get());
-    quad->setNormalBinding(osg::Geometry::BIND_OVERALL);
-    quad->setColorArray(colors.get());
-    quad->setColorBinding(osg::Geometry::BIND_PER_VERTEX);
-    quad->addPrimitiveSet(new osg::DrawArrays(GL_QUADS, 0, 4));
-    return quad.release();
+    unsigned int numSamples = 32;
+    float delta_yaw = 2.0f * osg::PI / ((float)numSamples - 1.0f);
+    float delta_time = time / (float)numSamples;
+    for (unsigned int i = 0; i < numSamples; ++i) {
+        float yaw = delta_yaw * (float)i;
+        osg::Vec3 pos(sinf(yaw) * radius, cosf(yaw) * radius, 0.0f);
+        osg::Quat rot(-yaw, osg::Z_AXIS);
+        path->insert(delta_time * (float)i, osg::AnimationPath::ControlPoint(pos, rot));
+    }
+    return path.release();
 }
 
 int main() {
@@ -42,13 +33,13 @@ int main() {
     
     osg::DisplaySettings::instance()->setNumMultiSamples(6);
 
-    osg::Geometry * quad = createQuad();
-    quad->setDataVariance(osg::Object::DYNAMIC);
-    quad->setUpdateCallback(new DynamicQuadCallback);
-    quad->setUseVertexBufferObjects(true);
-    quad->setUseDisplayList(false);
-    osg::ref_ptr<osg::Geode> root = new osg::Geode;
-    root->addDrawable(quad);
+    osg::ref_ptr<osg::Node> cessna = osgDB::readNodeFile("Resources/cessna.osg.0,0,90.rot");
+    osg::ref_ptr<osg::MatrixTransform> root = new osg::MatrixTransform;
+    root->addChild(cessna.get());
+
+    osg::ref_ptr<osg::AnimationPathCallback> animationPathCallback = new osg::AnimationPathCallback;
+    animationPathCallback->setAnimationPath(createAnimationPath(50.0f, 6.0f));
+    root->setUpdateCallback(animationPathCallback.get());
 
     osgViewer::Viewer viewer;
     viewer.setSceneData(root.get());
